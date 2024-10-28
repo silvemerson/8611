@@ -1,0 +1,5 @@
+# Ignorar diretório do Jenkins
+jenkins_home/
+
+# Ignorar diretório de dados do Gitea
+gitea/
