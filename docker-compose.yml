@@ -1,61 +1,37 @@
 version: '3.8'
 
 services:
-  jenkins:
-    image: jenkins/jenkins:lts
-    container_name: jenkins-dind
-    privileged: true  # Necessário para Docker-in-Docker
-    user: root  # Executa como root para evitar problemas de permissões
-    environment:
-      - DOCKER_HOST=tcp://docker:2375
-      - DOCKER_TLS_CERTDIR=
-      - JAVA_OPTS=-Djenkins.install.runSetupWizard=true
-    volumes:
+    jenkins-ci-server:
+      user: root
+      container_name: 'jenkins-ci-server'
+      image: jenkins/jenkins:lts
+      environment:
+        - USER_UID=1000
+      volumes:
       - ./jenkins_home:/var/jenkins_home
-      - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - jenkins-net  # Rede compartilhada com Docker DinD
-    ports:
-      - 8080:8080
-      - 50000:50000  # Para agentes Jenkins
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      - /usr/bin/docker:/usr/bin/docker
+      ports:
+        - "8080:8080"
+        - "50000:50000"
 
-  docker:
-    image: docker:20-dind
-    container_name: docker
-    privileged: true  # Permite usar Docker dentro do contêiner
-    environment:
-      - DOCKER_TLS_CERTDIR=
-      - DOCKER_HOST=tcp://0.0.0.0:2375
-    ports:
-      - "2375:2375"       
-    networks:
-      - jenkins-net  # Rede compartilhada com Docker DinD
-
-  gitea-server:
-    container_name: 'gitea-server'
-    image: gitea/gitea:latest
-    environment:
-    - USER_UID=1000
-    - USER_GID=1000
-    # - GITEA__server__ROOT_URL=http://localhost:3000/
-    # - GITEA__server__SSH_DOMAIN=localhost  # Define o domínio para acesso SSH
-    # - GITEA__server__SSH_PORT=2222  # Configura a porta SSH do Gitea
-    # - GITEA__server__START_SSH_SERVER=true  # Habilita o servidor SSH
-    
-    restart: always
-    networks:
-    - jenkins-net
-    volumes:
-    - ./gitea:/data
-    - /etc/timezone:/etc/timezone:ro
-    - /etc/localtime:/etc/localtime:ro
-    ports:
-    - "3000:3000"
-    - "2222:22"
-
-networks:
-  jenkins-net:
-    driver: bridge  # Rede para comunicação entre os serviços
+        
+    gitea-server:
+      container_name: 'gitea-server'
+      image: gitea/gitea:latest
+      environment:
+        - USER_UID=1000
+        - USER_GID=1000    
+      restart: always
+      volumes:
+        - ./gitea:/data
+        - /etc/timezone:/etc/timezone:ro
+        - /etc/localtime:/etc/localtime:ro
+      ports:
+        - "3000:3000"
+        - "2222:22"
 
 volumes:
   jenkins_home:
