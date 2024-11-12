@@ -1,0 +1,36 @@
+name: Build app.py - Flask
+
+on:
+  push:
+    branch:
+      - "master"
+  pull_request:
+    branch:
+      - "master"
+
+  workflow_dispatch:
+
+
+jobs:
+  build:
+    run-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Docker Build
+        run: docker build -t flask .
+      
+      - name: Run Container
+        run: | 
+          
+          docker run --name flask -e PASS=1234 -d -p 8081:8081 flask
+
+          sleep 10
+
+          curl -H "Authorization: Token 1234" http://localhost:8081
+
+          docker rm -f flask
+
+        
